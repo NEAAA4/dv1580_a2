@@ -13,7 +13,7 @@ typedef struct Memory {
 } Memory;
 
 // Global variables
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 static char* memory_pool = NULL;
 static Memory* lista = NULL;
 static size_t pool_size = 0;
@@ -164,10 +164,11 @@ void* mem_resize(void* block, size_t size) {
     }
 }
 
+// Deinitialize memory manager
 void mem_deinit() {
     pthread_mutex_lock(&lock);
     if (memory_pool) { 
-        free(memory_pool); // Free memory pool
+        free(memory_pool); // Free pool directly
         memory_pool = NULL;
         pool_size = 0;
     }
