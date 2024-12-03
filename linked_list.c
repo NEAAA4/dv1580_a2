@@ -4,7 +4,7 @@
 #include <string.h>
 #include <pthread.h>
 
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void list_init(Node** head, size_t size) {
     pthread_mutex_lock(&lock);
