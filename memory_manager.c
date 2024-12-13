@@ -4,7 +4,7 @@
 #include <string.h>
 #include <pthread.h>
 
-// Structure for memory block
+// Struktur för minnesblock
 typedef struct Memory {
     size_t size;
     size_t starting;
@@ -12,13 +12,12 @@ typedef struct Memory {
     int freeing;
 } Memory;
 
-// Global variables
+// Globala variabler
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 static char* memory_pool = NULL;
 static Memory* lista = NULL;
 static size_t pool_size = 0;
 
-// Initialize the memory manager
 void mem_init(size_t size) {
     pthread_mutex_lock(&lock);
     memory_pool = (char*)malloc(size);
@@ -40,21 +39,20 @@ void mem_init(size_t size) {
 
     lista->starting = 0; 
     lista->size = size; 
-    lista->freeing = 1;  // Block is free
+    lista->freeing = 1;  // Blocket är fritt
     lista->next = NULL; 
     pthread_mutex_unlock(&lock);
 }
 
-// Allocate memory
 void* mem_alloc(size_t size) {
     pthread_mutex_lock(&lock);
     Memory* here = lista;
     while (here != NULL) {
         if (here->freeing && here->size >= size) {
-            if (here->size > size) { // Split block
-                Memory* new = (Memory*)malloc(sizeof(Memory)); // new block
+            if (here->size > size) { // Dela block
+                Memory* new = (Memory*)malloc(sizeof(Memory)); // nytt block
                 if (new == NULL) {
-                    printf("Allocation for new block failed\n");
+                    printf("Allocation for new block failed \n");
                     pthread_mutex_unlock(&lock);
                     return NULL;  
                 }
@@ -65,7 +63,7 @@ void* mem_alloc(size_t size) {
                 new->next = here->next;
 
                 here->size = size;
-                here->freeing = 0; // not free
+                here->freeing = 0; // inte fri
                 here->next = new;
             } else {
                 here->freeing = 0;
@@ -74,13 +72,13 @@ void* mem_alloc(size_t size) {
             pthread_mutex_unlock(&lock);
             return allocated;
         }
+
         here = here->next;
     }
     pthread_mutex_unlock(&lock);
     return NULL; 
 }
 
-// Free memory
 void mem_free(void* block) {
     if (!block) {
         return;
@@ -100,18 +98,19 @@ void mem_free(void* block) {
             }
             here->freeing = 1;
 
-            if (here->next && here->next->freeing) { // Merge with next
+            if (here->next && here->next->freeing) { // slå ihop med nästa
                 Memory* bnext = here->next;
                 here->size += bnext->size;
                 here->next = bnext->next;
                 free(bnext);
             }
 
-            if (bfore && bfore->freeing) { // Merge with previous
+            if (bfore && bfore->freeing) { // slå ihop med föregående
                 bfore->size += here->size;
                 bfore->next = here->next;
                 free(here);
             }
+
             pthread_mutex_unlock(&lock);
             return;
         }
@@ -121,7 +120,6 @@ void mem_free(void* block) {
     pthread_mutex_unlock(&lock);
 }
 
-// Resize memory block
 void* mem_resize(void* block, size_t size) {
     if (block == NULL) {
         return mem_alloc(size);
@@ -151,24 +149,23 @@ void* mem_resize(void* block, size_t size) {
         return block;
     } else {
         pthread_mutex_unlock(&lock);
-        void* new = mem_alloc(size); // allocate new block
+        void* new = mem_alloc(size); // allokera nytt block
         if (new == NULL) {
-            printf("Allocation failed for new block\n");
+            printf("Allocation failed for new block \n");
             return NULL;  
         }
 
-        memcpy(new, block, shere); // copy data
+        memcpy(new, block, shere); // kopiera data
         mem_free(block);
 
         return new;
     }
 }
 
-// Deinitialize memory manager
 void mem_deinit() {
     pthread_mutex_lock(&lock);
     if (memory_pool) { 
-        free(memory_pool); // Free pool directly
+        free(memory_pool); // Frigör poolen direkt
         memory_pool = NULL;
         pool_size = 0;
     }
@@ -176,7 +173,7 @@ void mem_deinit() {
     Memory* here = lista;
     while (here) {
         Memory* next = here->next;
-        free(here); // Free metadata
+        free(here); // Frigör metadata
         here = next;
     }
     lista = NULL;
