@@ -4,6 +4,7 @@
 #include <string.h>
 #include <pthread.h>
 
+// Mutex for thread safety
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void list_init(Node** head, size_t size) {
@@ -17,7 +18,7 @@ void list_insert(Node** head, uint16_t data) {
     pthread_mutex_lock(&lock);
     Node* new = (Node*) mem_alloc(sizeof(Node));
     if (new == NULL) {
-        printf("Memory allocation failed\n");
+        printf("Memory allocation failed \n");
         pthread_mutex_unlock(&lock);
         return;
     }
@@ -29,7 +30,7 @@ void list_insert(Node** head, uint16_t data) {
         *head = new; 
     } else {
         Node* here = *head;
-        while (here->next != NULL) {
+        while (here->next != NULL) { // Traversing to empty
             here = here->next;
         }
         here->next = new;
@@ -39,20 +40,21 @@ void list_insert(Node** head, uint16_t data) {
 
 void list_insert_after(Node* prev_node, uint16_t data) {
     if (prev_node == NULL) {
-        printf("Prev_node is NULL\n");
+        printf("Prev_node is NULL \n");
         return;
     }
 
     pthread_mutex_lock(&lock);
     Node* new = (Node*) mem_alloc(sizeof(Node));
     if (new == NULL) {
-        printf("Memory allocation failed\n");
+        printf("Memory allocation failed \n");
         pthread_mutex_unlock(&lock);
         return;
     }
 
     new->data = data;
     new->next = prev_node->next;
+
     prev_node->next = new;
     pthread_mutex_unlock(&lock);
 }
@@ -62,50 +64,53 @@ void list_insert_before(Node** head, Node* next_node, uint16_t data) {
     if (next_node == *head) {
         Node* new = (Node*) mem_alloc(sizeof(Node));
         if (new == NULL) {
-            printf("Memory allocation failed\n");
+            printf("Memory allocation failed \n");
             pthread_mutex_unlock(&lock);
             return;
         }
+
         new->data = data;
         new->next = *head;
         *head = new;
-    } else {
-        Node* prev_node = *head;
-        while (prev_node != NULL && prev_node->next != next_node) {
-            prev_node = prev_node->next;
-        }
-
-        if (prev_node == NULL) {
-            printf("Next_node not in list\n");
-            pthread_mutex_unlock(&lock);
-            return;
-        }
-
-        Node* new = (Node*) mem_alloc(sizeof(Node));
-        if (new == NULL) {
-            printf("Memory allocation failed\n");
-            pthread_mutex_unlock(&lock);
-            return;
-        }
-
-        new->data = data;
-        new->next = next_node;
-        prev_node->next = new;
+        pthread_mutex_unlock(&lock);
+        return;
     }
+
+    Node* prev_node = *head; // Check for prev node
+    while (prev_node != NULL && prev_node->next != next_node) {
+        prev_node = prev_node->next;
+    }
+
+    if (prev_node == NULL) {
+        printf("Next_node not in list \n");
+        pthread_mutex_unlock(&lock);
+        return;
+    }
+
+    Node* new = (Node*) mem_alloc(sizeof(Node));
+    if (new == NULL) {
+        printf("Memory allocation failed \n");
+        pthread_mutex_unlock(&lock);
+        return;
+    }
+
+    new->data = data;
+    new->next = next_node;
+    prev_node->next = new;
     pthread_mutex_unlock(&lock);
 }
 
 void list_delete(Node** head, uint16_t data) {
     pthread_mutex_lock(&lock);
     if (*head == NULL || head == NULL) {
-        printf("List is empty\n");
+        printf("List is empty \n");
         pthread_mutex_unlock(&lock);
         return;
     }
 
     Node* temp = NULL;
 
-    if ((*head)->data == data) {
+    if ((*head)->data == data) { // Delete head
         temp = *head;
         *head = (*head)->next;
         mem_free(temp);
@@ -115,7 +120,7 @@ void list_delete(Node** head, uint16_t data) {
 
     Node* here = *head;
     while (here->next != NULL) {
-        if (here->next->data == data) {
+        if (here->next->data == data) { // Search for data
             temp = here->next;
             here->next = here->next->next;
             mem_free(temp);
@@ -124,8 +129,7 @@ void list_delete(Node** head, uint16_t data) {
         }
         here = here->next;
     }
-
-    printf("Data not found in list\n");
+    printf("Data not found in list \n");
     pthread_mutex_unlock(&lock);
 }
 
