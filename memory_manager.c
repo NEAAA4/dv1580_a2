@@ -9,7 +9,7 @@ typedef struct Memory {
     size_t size;
     size_t starting;
     struct Memory* next;
-    int freeing;
+    size_t freeing;
 } Memory;
 
 // Globala variabler
